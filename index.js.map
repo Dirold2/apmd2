@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/index.ts"],
+  "sourcesContent": ["export { default, APMApi, importAppleMusicPlaylist } from \"./api/APMApi.js\";\nexport {\n  AppleMusicAlbumParseError,\n  AppleMusicPlaylistParseError,\n  AppleMusicTrackParseError,\n  normalizeAppleMusicAlbumUrl,\n  normalizeAppleMusicPlaylistUrl,\n  normalizeAppleMusicTrackUrl,\n  parseAppleMusicAlbumHtml,\n  parseAppleMusicPlaylistHtml,\n  parseAppleMusicSearchHtml,\n  parseAppleMusicTrackHtml,\n} from \"./core/index.js\";\nexport type {\n  AppleMusicAlbum,\n  AppleMusicPlaylist,\n  AppleMusicSearchArtist,\n  AppleMusicSearchOptions,\n  AppleMusicSearchResults,\n  AppleMusicSearchTrack,\n  AppleMusicTrack,\n  ImportAppleMusicPlaylistOptions,\n  Track,\n} from \"./types/index.js\";\n"],
+  "mappings": "aAAA,OAAS,QAAS,OAAQ,6BAAgC,kBAC1D,OACE,0BACA,6BACA,0BACA,4BACA,+BACA,4BACA,yBACA,4BACA,0BACA,6BACK",
+  "names": []
+}
