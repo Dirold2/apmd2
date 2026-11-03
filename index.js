@@ -1,0 +1,2 @@
+"use strict";export{default,APMApi,importAppleMusicPlaylist}from"./api/APMApi.js";export{AppleMusicAlbumParseError,AppleMusicPlaylistParseError,AppleMusicTrackParseError,normalizeAppleMusicAlbumUrl,normalizeAppleMusicPlaylistUrl,normalizeAppleMusicTrackUrl,parseAppleMusicAlbumHtml,parseAppleMusicPlaylistHtml,parseAppleMusicSearchHtml,parseAppleMusicTrackHtml}from"./core/index.js";
+//# sourceMappingURL=index.js.map
