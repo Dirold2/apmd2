@@ -1,6 +1,6 @@
 {
   "name": "apmd2",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "description": "A Node.js wrapper for the Apple API (Unofficial) http://apple.com",
   "main": "dist/index.js",
@@ -22,10 +22,9 @@
     "apple.music"
   ],
   "dependencies": {
-    "crypto": "^1.0.1",
     "hcacher": "^0.3.0",
-    "hyperttp": "^0.6.2",
-    "node-html-parser": "^9.0.5"
+    "hyperttp": "^0.7.4",
+    "node-html-parser": "^9.0.6"
   },
   "devDependencies": {
     "@dirold2/dev-tools": "^1.1.3",
