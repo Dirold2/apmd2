@@ -19,6 +19,42 @@ export interface AppleMusicPlaylist {
   sourceUrl: string;
 }
 
+export interface AppleMusicDailyChart {
+  title: string;
+  url: string;
+}
+
+export interface AppleMusicDailyCharts {
+  sourceUrl: string;
+  charts: AppleMusicDailyChart[];
+}
+
+export interface AppleMusicDailyChartsOptions {
+  /** Storefront used to view the chart catalogue. Defaults to `us`. */
+  storefront?: string;
+  signal?: AbortSignal;
+}
+
+/** Album card rendered in the New This Week catalogue, not a full album. */
+export interface AppleMusicNewRelease {
+  appleId: string;
+  title: string;
+  artists: string[];
+  url: string;
+  cover?: string;
+}
+
+export interface AppleMusicNewReleases {
+  sourceUrl: string;
+  albums: AppleMusicNewRelease[];
+}
+
+export interface AppleMusicNewReleasesOptions {
+  /** Storefront used to view the room. Defaults to `uz`. */
+  storefront?: string;
+  signal?: AbortSignal;
+}
+
 export interface AppleMusicAlbum {
   title: string;
   artists: string[];

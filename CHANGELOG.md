@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.5] (2026-11-08)
+
+### Added
+
+- Added `APMApi.getDailyCharts()` to discover public Daily Top 100 playlists, plus `getDailyGlobalTopChart()` and `getDailyRussiaTopChart()` for their track lists.
+- Added `APMApi.getNewReleases()` to read album cards from Apple Music's New This Week room, with `uz` as the default storefront.
+- Added HTML parsing helpers, TypeScript models, documentation and tests for daily charts and new releases.
+- Added short-lived caching and in-flight request deduplication for the new methods; passing an abort signal bypasses both.
+
+### Notes
+
+- Results depend on the public Apple Music HTML and storefront availability. Chart and playlist pages may expose only a subset of entries; release cards do not include track lists or release dates.
+
 ## [1.0.2] (2026-10-29)
 
 ### Added

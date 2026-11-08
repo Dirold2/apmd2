@@ -2,6 +2,8 @@ import { parse } from "node-html-parser";
 
 import type {
   AppleMusicAlbum,
+  AppleMusicDailyCharts,
+  AppleMusicNewReleases,
   AppleMusicPlaylist,
   AppleMusicSearchArtist,
   AppleMusicSearchResults,
@@ -9,6 +11,22 @@ import type {
   AppleMusicTrack,
   Track,
 } from "../types/index.js";
+
+/** The public daily chart catalogue could not be parsed. */
+export class AppleMusicDailyChartsParseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AppleMusicDailyChartsParseError";
+  }
+}
+
+/** The New This Week room did not contain recognizable album cards. */
+export class AppleMusicNewReleasesParseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AppleMusicNewReleasesParseError";
+  }
+}
 
 /** The page did not contain the public playlist state expected by this importer. */
 export class AppleMusicPlaylistParseError extends Error {
@@ -205,6 +223,70 @@ export function normalizeAppleMusicTrackUrl(value: string): string {
   url.search = "";
   url.hash = "";
   return url.toString();
+}
+
+/** Parses the server-rendered daily chart catalogue in its original order. */
+export function parseAppleMusicDailyChartsHtml(html: string, sourceUrl: string): AppleMusicDailyCharts {
+  const document = parse(html);
+  const charts: AppleMusicDailyCharts["charts"] = [];
+  const seen = new Set<string>();
+
+  for (const link of document.querySelectorAll("a[data-testid='product-lockup-title']")) {
+    const href = link.getAttribute("href");
+    const title = link.textContent.trim();
+    if (!href || !title) continue;
+    try {
+      const url = normalizeAppleMusicPlaylistUrl(new URL(href, sourceUrl).toString());
+      if (!seen.has(url)) {
+        seen.add(url);
+        charts.push({ title, url });
+      }
+    } catch {
+      // Ignore links that do not identify public Apple Music playlists.
+    }
+  }
+
+  if (charts.length === 0) {
+    throw new AppleMusicDailyChartsParseError("No daily chart playlists were found on the Apple Music page. The page may be unavailable or its format may have changed.");
+  }
+  return { sourceUrl, charts };
+}
+
+/** Parses album cards from the server-rendered New This Week room. */
+export function parseAppleMusicNewReleasesHtml(html: string, sourceUrl = "https://music.apple.com/uz/room/6831472600"): AppleMusicNewReleases {
+  const document = parse(html);
+  const albums: AppleMusicNewReleases["albums"] = [];
+  const seen = new Set<string>();
+  for (const card of document.querySelectorAll("[data-testid='product-lockup']")) {
+    const link = card.querySelector("a[data-testid='product-lockup-title']");
+    const href = link?.getAttribute("href");
+    const title = link?.textContent.trim();
+    if (!href || !title) continue;
+    try {
+      const url = normalizeAppleMusicAlbumUrl(new URL(href, sourceUrl).toString());
+      const path = new URL(url).pathname;
+      const match = /^\/[a-z]{2}(?:-[a-z]{2})?\/album\/[^/]+\/(\d+)\/?$/i.exec(path);
+      const appleId = match?.[1];
+      if (!appleId || seen.has(appleId)) continue;
+      seen.add(appleId);
+      const artists = card.querySelectorAll("[data-testid='product-lockup-subtitle']")
+        .map((artist) => artist.textContent.trim()).filter(Boolean);
+      const srcset = card.querySelector("picture source[srcset]")?.getAttribute("srcset");
+      const candidate = srcset?.split(",")[0]?.trim().split(/\s+/)[0];
+      let cover: string | undefined;
+      if (candidate) {
+        const image = new URL(candidate, sourceUrl);
+        if (image.protocol === "https:" && /(?:^|\.)mzstatic\.com$/i.test(image.hostname)) cover = image.toString();
+      }
+      albums.push({ appleId, title, artists, url, ...(cover ? { cover } : {}) });
+    } catch {
+      // Ignore malformed or non-Apple album links.
+    }
+  }
+  if (albums.length === 0) {
+    throw new AppleMusicNewReleasesParseError("No album cards were found in the Apple Music New This Week room. The page may be unavailable or its format may have changed.");
+  }
+  return { sourceUrl, albums };
 }
 
 /** Parses already-downloaded public Apple Music playlist HTML. */

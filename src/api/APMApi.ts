@@ -6,12 +6,18 @@ import {
   normalizeAppleMusicPlaylistUrl,
   normalizeAppleMusicTrackUrl,
   parseAppleMusicAlbumHtml,
+  parseAppleMusicDailyChartsHtml,
+  parseAppleMusicNewReleasesHtml,
   parseAppleMusicPlaylistHtml,
   parseAppleMusicSearchHtml,
   parseAppleMusicTrackHtml,
 } from "../core/index.js";
 import type {
   AppleMusicAlbum,
+  AppleMusicDailyCharts,
+  AppleMusicDailyChartsOptions,
+  AppleMusicNewReleases,
+  AppleMusicNewReleasesOptions,
   AppleMusicPlaylist,
   AppleMusicSearchOptions,
   AppleMusicSearchResults,
@@ -40,6 +46,10 @@ export class APMApi {
     ttl: 60_000,
   });
   private readonly trackInflight = new Map<string, Promise<AppleMusicTrack>>();
+  private readonly dailyChartsCache = new CacheManager<AppleMusicDailyCharts>({ maxSize: 100, ttl: 60_000 });
+  private readonly dailyChartsInflight = new Map<string, Promise<AppleMusicDailyCharts>>();
+  private readonly newReleasesCache = new CacheManager<AppleMusicNewReleases>({ maxSize: 100, ttl: 60_000 });
+  private readonly newReleasesInflight = new Map<string, Promise<AppleMusicNewReleases>>();
   private readonly searchCache = new CacheManager<AppleMusicSearchResults>({
     maxSize: 200,
     ttl: 60_000,
@@ -120,6 +130,76 @@ export class APMApi {
       this.trackCache.set(sourceUrl, track);
       return track;
     });
+  }
+
+  /** Lists the daily Top 100 playlists rendered in Apple's chart catalogue. */
+  async getDailyCharts(options: AppleMusicDailyChartsOptions = {}): Promise<AppleMusicDailyCharts> {
+    const storefront = normalizeStorefront(options.storefront ?? "us");
+    const sourceUrl = `https://music.apple.com/${storefront}/new/top-charts/daily-global-top-charts`;
+    const request = async () => parseAppleMusicDailyChartsHtml(
+      await this.http.get<string>(sourceUrl, "text", options.signal), sourceUrl,
+    );
+    if (options.signal !== undefined) return request();
+    const cached = this.dailyChartsCache.get(sourceUrl);
+    if (cached !== undefined) return cached;
+    const existing = this.dailyChartsInflight.get(sourceUrl);
+    if (existing !== undefined) return existing;
+    const promise = (async () => {
+      try {
+        const result = await request();
+        this.dailyChartsCache.set(sourceUrl, result);
+        return result;
+      } finally {
+        this.dailyChartsInflight.delete(sourceUrl);
+      }
+    })();
+    this.dailyChartsInflight.set(sourceUrl, promise);
+    return promise;
+  }
+
+  /** Lists album cards from Apple's New This Week room with one page request. */
+  async getNewReleases(options: AppleMusicNewReleasesOptions = {}): Promise<AppleMusicNewReleases> {
+    const storefront = normalizeStorefront(options.storefront ?? "uz");
+    const sourceUrl = `https://music.apple.com/${storefront}/room/6831472600`;
+    const request = async () => parseAppleMusicNewReleasesHtml(
+      await this.http.get<string>(sourceUrl, "text", options.signal), sourceUrl,
+    );
+    if (options.signal !== undefined) return request();
+    const cached = this.newReleasesCache.get(sourceUrl);
+    if (cached !== undefined) return cached;
+    const existing = this.newReleasesInflight.get(sourceUrl);
+    if (existing !== undefined) return existing;
+    const promise = (async () => {
+      try {
+        const result = await request();
+        this.newReleasesCache.set(sourceUrl, result);
+        return result;
+      } finally {
+        this.newReleasesInflight.delete(sourceUrl);
+      }
+    })();
+    this.newReleasesInflight.set(sourceUrl, promise);
+    return promise;
+  }
+
+  /** Fetches the current Global Top 100 playlist discovered in the daily chart catalogue. */
+  async getDailyGlobalTopChart(options: AppleMusicDailyChartsOptions = {}): Promise<AppleMusicPlaylist> {
+    const catalogue = await this.getDailyCharts(options);
+    const global = catalogue.charts.find((chart) =>
+      new URL(chart.url).pathname.split("/").includes("pl.d25f5d1181894928af76c85c967f8f31"),
+    );
+    if (!global) throw new Error("The Global Top 100 playlist was not found in the Apple Music daily chart catalogue.");
+    return this.getPlaylist(global.url, { signal: options.signal });
+  }
+
+  /** Fetches the current Russia Top 100 playlist discovered in the daily chart catalogue. */
+  async getDailyRussiaTopChart(options: AppleMusicDailyChartsOptions = {}): Promise<AppleMusicPlaylist> {
+    const catalogue = await this.getDailyCharts(options);
+    const russia = catalogue.charts.find((chart) =>
+      new URL(chart.url).pathname.split("/").includes("pl.728bd30a9247487c80a483f4168a9dcd"),
+    );
+    if (!russia) throw new Error("The Russia Top 100 playlist was not found in the Apple Music daily chart catalogue.");
+    return this.getPlaylist(russia.url, { signal: options.signal });
   }
 
   /** Searches the selected Apple Music storefront for tracks and artists. */
