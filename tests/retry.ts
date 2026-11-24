@@ -14,7 +14,10 @@ const playlistHtml = `<script type="application/json">${JSON.stringify({
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
-  const promise = new Promise<T>((ok, fail) => { resolve = ok; reject = fail; });
+  const promise = new Promise<T>((ok, fail) => {
+    resolve = ok;
+    reject = fail;
+  });
   return { promise, resolve, reject };
 }
 
@@ -32,7 +35,11 @@ test("HyperClient retries transient GET responses but not permanent ones", async
   const address = server.address();
   assert.ok(address && typeof address !== "string");
   const base = `http://127.0.0.1:${address.port}`;
-  const client = new HyperClient({ retry: { maxRetries: 2, baseDelay: 1, maxDelay: 1, jitter: false }, cache: { enabled: false }, inflight: { enabled: false } });
+  const client = new HyperClient({
+    retry: { maxRetries: 2, baseDelay: 1, maxDelay: 1, jitter: false },
+    cache: { enabled: false },
+    inflight: { enabled: false },
+  });
   try {
     assert.equal(await client.get(`${base}/transient`, "text"), "success");
     assert.equal(counts.get("/transient"), 3);
@@ -50,10 +57,12 @@ test("HyperClient retries transient GET responses but not permanent ones", async
 test("playlist shares in-flight work, caches success and bypasses cache for signals", async () => {
   const first = deferred<string>();
   const calls: Array<[string, string, AbortSignal | undefined]> = [];
-  const client = { get: (url: string, type: string, signal?: AbortSignal) => {
-    calls.push([url, type, signal]);
-    return calls.length === 1 ? first.promise : Promise.resolve(playlistHtml);
-  } } as unknown as HyperClient;
+  const client = {
+    get: (url: string, type: string, signal?: AbortSignal) => {
+      calls.push([url, type, signal]);
+      return calls.length === 1 ? first.promise : Promise.resolve(playlistHtml);
+    },
+  } as unknown as HyperClient;
   const api = new APMApi(client);
   const a = api.getPlaylist(playlistUrl);
   const b = api.getPlaylist(playlistUrl);
@@ -76,7 +85,9 @@ test("failed shared request is evicted and next call can succeed", async () => {
   const first = deferred<string>();
   const error = new Error("transport failure");
   let calls = 0;
-  const client = { get: () => ++calls === 1 ? first.promise : Promise.resolve(playlistHtml) } as unknown as HyperClient;
+  const client = {
+    get: () => (++calls === 1 ? first.promise : Promise.resolve(playlistHtml)),
+  } as unknown as HyperClient;
   const api = new APMApi(client);
   const a = api.getPlaylist(playlistUrl);
   const b = api.getPlaylist(playlistUrl);
@@ -99,14 +110,16 @@ test("signalled requests are independent and an abort does not cancel shared wor
   const controller = new AbortController();
   const reason = new Error("cancelled");
   let calls = 0;
-  const client = { get: (_url: string, _type: string, signal?: AbortSignal) => {
-    calls++;
-    if (!signal) return shared.promise;
-    return new Promise<string>((resolve, reject) => {
-      if (signal.aborted) return reject(signal.reason);
-      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
-    });
-  } } as unknown as HyperClient;
+  const client = {
+    get: (_url: string, _type: string, signal?: AbortSignal) => {
+      calls++;
+      if (!signal) return shared.promise;
+      return new Promise<string>((resolve, reject) => {
+        if (signal.aborted) return reject(signal.reason);
+        signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+      });
+    },
+  } as unknown as HyperClient;
   const api = new APMApi(client);
   const ordinary = api.getPlaylist(playlistUrl);
   const cancelled = api.getPlaylist(playlistUrl, { signal: controller.signal });

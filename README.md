@@ -38,9 +38,7 @@ The importer keeps the storefront from the URL (for example, `/in/` or `/us/`) b
 ```ts
 import { APMApi } from "apmd2";
 
-const track = await new APMApi().getTrack(
-  "https://music.apple.com/ru/song/on-on/1807345148",
-);
+const track = await new APMApi().getTrack("https://music.apple.com/ru/song/on-on/1807345148");
 
 console.log(track.title); // On & On
 console.log(track.artists); // ["Chris Lake", "Yael Watchman"]
@@ -51,9 +49,7 @@ console.log(track.artists); // ["Chris Lake", "Yael Watchman"]
 ```ts
 import { APMApi } from "apmd2";
 
-const album = await new APMApi().getAlbum(
-  "https://music.apple.com/ru/album/chemistry/1807345147",
-);
+const album = await new APMApi().getAlbum("https://music.apple.com/ru/album/chemistry/1807345147");
 
 console.log(album.title); // Chemistry
 console.log(album.tracks);

@@ -46,9 +46,15 @@ export class APMApi {
     ttl: 60_000,
   });
   private readonly trackInflight = new Map<string, Promise<AppleMusicTrack>>();
-  private readonly dailyChartsCache = new CacheManager<AppleMusicDailyCharts>({ maxSize: 100, ttl: 60_000 });
+  private readonly dailyChartsCache = new CacheManager<AppleMusicDailyCharts>({
+    maxSize: 100,
+    ttl: 60_000,
+  });
   private readonly dailyChartsInflight = new Map<string, Promise<AppleMusicDailyCharts>>();
-  private readonly newReleasesCache = new CacheManager<AppleMusicNewReleases>({ maxSize: 100, ttl: 60_000 });
+  private readonly newReleasesCache = new CacheManager<AppleMusicNewReleases>({
+    maxSize: 100,
+    ttl: 60_000,
+  });
   private readonly newReleasesInflight = new Map<string, Promise<AppleMusicNewReleases>>();
   private readonly searchCache = new CacheManager<AppleMusicSearchResults>({
     maxSize: 200,
@@ -136,9 +142,11 @@ export class APMApi {
   async getDailyCharts(options: AppleMusicDailyChartsOptions = {}): Promise<AppleMusicDailyCharts> {
     const storefront = normalizeStorefront(options.storefront ?? "us");
     const sourceUrl = `https://music.apple.com/${storefront}/new/top-charts/daily-global-top-charts`;
-    const request = async () => parseAppleMusicDailyChartsHtml(
-      await this.http.get<string>(sourceUrl, "text", options.signal), sourceUrl,
-    );
+    const request = async () =>
+      parseAppleMusicDailyChartsHtml(
+        await this.http.get<string>(sourceUrl, "text", options.signal),
+        sourceUrl,
+      );
     if (options.signal !== undefined) return request();
     const cached = this.dailyChartsCache.get(sourceUrl);
     if (cached !== undefined) return cached;
@@ -161,9 +169,11 @@ export class APMApi {
   async getNewReleases(options: AppleMusicNewReleasesOptions = {}): Promise<AppleMusicNewReleases> {
     const storefront = normalizeStorefront(options.storefront ?? "uz");
     const sourceUrl = `https://music.apple.com/${storefront}/room/6831472600`;
-    const request = async () => parseAppleMusicNewReleasesHtml(
-      await this.http.get<string>(sourceUrl, "text", options.signal), sourceUrl,
-    );
+    const request = async () =>
+      parseAppleMusicNewReleasesHtml(
+        await this.http.get<string>(sourceUrl, "text", options.signal),
+        sourceUrl,
+      );
     if (options.signal !== undefined) return request();
     const cached = this.newReleasesCache.get(sourceUrl);
     if (cached !== undefined) return cached;
@@ -183,27 +193,40 @@ export class APMApi {
   }
 
   /** Fetches the current Global Top 100 playlist discovered in the daily chart catalogue. */
-  async getDailyGlobalTopChart(options: AppleMusicDailyChartsOptions = {}): Promise<AppleMusicPlaylist> {
+  async getDailyGlobalTopChart(
+    options: AppleMusicDailyChartsOptions = {},
+  ): Promise<AppleMusicPlaylist> {
     const catalogue = await this.getDailyCharts(options);
     const global = catalogue.charts.find((chart) =>
       new URL(chart.url).pathname.split("/").includes("pl.d25f5d1181894928af76c85c967f8f31"),
     );
-    if (!global) throw new Error("The Global Top 100 playlist was not found in the Apple Music daily chart catalogue.");
+    if (!global)
+      throw new Error(
+        "The Global Top 100 playlist was not found in the Apple Music daily chart catalogue.",
+      );
     return this.getPlaylist(global.url, { signal: options.signal });
   }
 
   /** Fetches the current Russia Top 100 playlist discovered in the daily chart catalogue. */
-  async getDailyRussiaTopChart(options: AppleMusicDailyChartsOptions = {}): Promise<AppleMusicPlaylist> {
+  async getDailyRussiaTopChart(
+    options: AppleMusicDailyChartsOptions = {},
+  ): Promise<AppleMusicPlaylist> {
     const catalogue = await this.getDailyCharts(options);
     const russia = catalogue.charts.find((chart) =>
       new URL(chart.url).pathname.split("/").includes("pl.728bd30a9247487c80a483f4168a9dcd"),
     );
-    if (!russia) throw new Error("The Russia Top 100 playlist was not found in the Apple Music daily chart catalogue.");
+    if (!russia)
+      throw new Error(
+        "The Russia Top 100 playlist was not found in the Apple Music daily chart catalogue.",
+      );
     return this.getPlaylist(russia.url, { signal: options.signal });
   }
 
   /** Searches the selected Apple Music storefront for tracks and artists. */
-  async search(query: string, options: AppleMusicSearchOptions = {}): Promise<AppleMusicSearchResults> {
+  async search(
+    query: string,
+    options: AppleMusicSearchOptions = {},
+  ): Promise<AppleMusicSearchResults> {
     const normalizedQuery = query.trim();
     if (normalizedQuery === "") {
       throw new TypeError("Apple Music search query must not be empty.");
@@ -230,7 +253,10 @@ export class APMApi {
     });
   }
 
-  private async requestPlaylist(sourceUrl: string, signal?: AbortSignal): Promise<AppleMusicPlaylist> {
+  private async requestPlaylist(
+    sourceUrl: string,
+    signal?: AbortSignal,
+  ): Promise<AppleMusicPlaylist> {
     const html = await this.http.get<string>(sourceUrl, "text", signal);
     return parseAppleMusicPlaylistHtml(html, sourceUrl);
   }
@@ -344,7 +370,9 @@ export class APMApi {
 function normalizeStorefront(value: string | undefined): string {
   const storefront = (value ?? "ru").trim().toLowerCase();
   if (!/^[a-z]{2}(?:-[a-z]{2})?$/.test(storefront)) {
-    throw new TypeError("Apple Music storefront must be a two-letter country code, for example ru or us.");
+    throw new TypeError(
+      "Apple Music storefront must be a two-letter country code, for example ru or us.",
+    );
   }
   return storefront;
 }

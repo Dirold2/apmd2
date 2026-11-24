@@ -226,7 +226,10 @@ export function normalizeAppleMusicTrackUrl(value: string): string {
 }
 
 /** Parses the server-rendered daily chart catalogue in its original order. */
-export function parseAppleMusicDailyChartsHtml(html: string, sourceUrl: string): AppleMusicDailyCharts {
+export function parseAppleMusicDailyChartsHtml(
+  html: string,
+  sourceUrl: string,
+): AppleMusicDailyCharts {
   const document = parse(html);
   const charts: AppleMusicDailyCharts["charts"] = [];
   const seen = new Set<string>();
@@ -247,13 +250,18 @@ export function parseAppleMusicDailyChartsHtml(html: string, sourceUrl: string):
   }
 
   if (charts.length === 0) {
-    throw new AppleMusicDailyChartsParseError("No daily chart playlists were found on the Apple Music page. The page may be unavailable or its format may have changed.");
+    throw new AppleMusicDailyChartsParseError(
+      "No daily chart playlists were found on the Apple Music page. The page may be unavailable or its format may have changed.",
+    );
   }
   return { sourceUrl, charts };
 }
 
 /** Parses album cards from the server-rendered New This Week room. */
-export function parseAppleMusicNewReleasesHtml(html: string, sourceUrl = "https://music.apple.com/uz/room/6831472600"): AppleMusicNewReleases {
+export function parseAppleMusicNewReleasesHtml(
+  html: string,
+  sourceUrl = "https://music.apple.com/uz/room/6831472600",
+): AppleMusicNewReleases {
   const document = parse(html);
   const albums: AppleMusicNewReleases["albums"] = [];
   const seen = new Set<string>();
@@ -269,14 +277,17 @@ export function parseAppleMusicNewReleasesHtml(html: string, sourceUrl = "https:
       const appleId = match?.[1];
       if (!appleId || seen.has(appleId)) continue;
       seen.add(appleId);
-      const artists = card.querySelectorAll("[data-testid='product-lockup-subtitle']")
-        .map((artist) => artist.textContent.trim()).filter(Boolean);
+      const artists = card
+        .querySelectorAll("[data-testid='product-lockup-subtitle']")
+        .map((artist) => artist.textContent.trim())
+        .filter(Boolean);
       const srcset = card.querySelector("picture source[srcset]")?.getAttribute("srcset");
       const candidate = srcset?.split(",")[0]?.trim().split(/\s+/)[0];
       let cover: string | undefined;
       if (candidate) {
         const image = new URL(candidate, sourceUrl);
-        if (image.protocol === "https:" && /(?:^|\.)mzstatic\.com$/i.test(image.hostname)) cover = image.toString();
+        if (image.protocol === "https:" && /(?:^|\.)mzstatic\.com$/i.test(image.hostname))
+          cover = image.toString();
       }
       albums.push({ appleId, title, artists, url, ...(cover ? { cover } : {}) });
     } catch {
@@ -284,16 +295,22 @@ export function parseAppleMusicNewReleasesHtml(html: string, sourceUrl = "https:
     }
   }
   if (albums.length === 0) {
-    throw new AppleMusicNewReleasesParseError("No album cards were found in the Apple Music New This Week room. The page may be unavailable or its format may have changed.");
+    throw new AppleMusicNewReleasesParseError(
+      "No album cards were found in the Apple Music New This Week room. The page may be unavailable or its format may have changed.",
+    );
   }
   return { sourceUrl, albums };
 }
 
 /** Parses already-downloaded public Apple Music playlist HTML. */
-export function parseAppleMusicPlaylistHtml(html: string, sourceUrl = "https://music.apple.com/"): AppleMusicPlaylist {
+export function parseAppleMusicPlaylistHtml(
+  html: string,
+  sourceUrl = "https://music.apple.com/",
+): AppleMusicPlaylist {
   const document = parse(html);
   const serializedStates = document.querySelectorAll("script[type='application/json']");
-  const fallbackTitle = readMetaContent(document, "apple:title") ?? readMetaContent(document, "og:title");
+  const fallbackTitle =
+    readMetaContent(document, "apple:title") ?? readMetaContent(document, "og:title");
 
   for (const state of serializedStates) {
     const json = tryParseJson(state.textContent);
@@ -313,7 +330,10 @@ export function parseAppleMusicPlaylistHtml(html: string, sourceUrl = "https://m
 }
 
 /** Parses already-downloaded public Apple Music album HTML. */
-export function parseAppleMusicAlbumHtml(html: string, sourceUrl = "https://music.apple.com/"): AppleMusicAlbum {
+export function parseAppleMusicAlbumHtml(
+  html: string,
+  sourceUrl = "https://music.apple.com/",
+): AppleMusicAlbum {
   const document = parse(html);
 
   for (const state of document.querySelectorAll("script[type='application/json']")) {
@@ -354,7 +374,10 @@ export function parseAppleMusicAlbumHtml(html: string, sourceUrl = "https://musi
 }
 
 /** Parses already-downloaded public Apple Music track HTML. */
-export function parseAppleMusicTrackHtml(html: string, sourceUrl = "https://music.apple.com/"): AppleMusicTrack {
+export function parseAppleMusicTrackHtml(
+  html: string,
+  sourceUrl = "https://music.apple.com/",
+): AppleMusicTrack {
   const document = parse(html);
   const durationMs = parseIsoDurationMs(readMetaContent(document, "music:song:duration"));
 
@@ -364,13 +387,17 @@ export function parseAppleMusicTrackHtml(html: string, sourceUrl = "https://musi
       continue;
     }
 
-
     const detail = findSongDetail(json);
     const cover = getArtworkUrl(detail?.artwork?.dictionary?.url);
     const title = detail === undefined ? undefined : nonEmptyString(detail.title);
     const artist = detail === undefined ? undefined : nonEmptyString(detail.artists);
     const appleId = detail?.contentDescriptor?.identifiers?.storeAdamID;
-    if (detail !== undefined && title !== undefined && artist !== undefined && appleId !== undefined) {
+    if (
+      detail !== undefined &&
+      title !== undefined &&
+      artist !== undefined &&
+      appleId !== undefined
+    ) {
       const artists = (detail.artistLinks ?? [])
         .map((link) => nonEmptyString(link.title))
         .filter((item): item is string => item !== undefined);
@@ -399,10 +426,7 @@ function getArtworkUrl(value: unknown): string | undefined {
     return undefined;
   }
 
-  return value
-    .replaceAll("{w}", "1200")
-    .replaceAll("{h}", "1200")
-    .replaceAll("{f}", "jpg");
+  return value.replaceAll("{w}", "1200").replaceAll("{h}", "1200").replaceAll("{f}", "jpg");
 }
 
 /** Parses already-downloaded public Apple Music search HTML. */
@@ -448,7 +472,9 @@ export function parseAppleMusicSearchHtml(
 }
 
 function readMetaContent(document: ReturnType<typeof parse>, property: string): string | undefined {
-  return document.querySelector(`meta[property='${property}']`)?.getAttribute("content") ?? undefined;
+  return (
+    document.querySelector(`meta[property='${property}']`)?.getAttribute("content") ?? undefined
+  );
 }
 
 function tryParseJson(value: string): JsonValue | undefined {
@@ -475,7 +501,11 @@ function findSongDetail(value: JsonValue): SerializedSongDetail | undefined {
   }
 
   const detail = value as SerializedSongDetail;
-  if (detail.contentDescriptor?.kind === "song" && typeof detail.title === "string" && typeof detail.artists === "string") {
+  if (
+    detail.contentDescriptor?.kind === "song" &&
+    typeof detail.title === "string" &&
+    typeof detail.artists === "string"
+  ) {
     return detail;
   }
 
@@ -569,7 +599,12 @@ function normalizeSearchResult(result: SerializedSearchResult): NormalizedSearch
   const appleId = descriptor?.identifiers?.storeAdamID;
   const url = nonEmptyString(descriptor?.url);
 
-  if (title === undefined || descriptor === undefined || appleId === undefined || url === undefined) {
+  if (
+    title === undefined ||
+    descriptor === undefined ||
+    appleId === undefined ||
+    url === undefined
+  ) {
     return undefined;
   }
 
@@ -591,7 +626,9 @@ function normalizeSearchResult(result: SerializedSearchResult): NormalizedSearch
 
 function artistFromSearchSubtitle(subtitle: string | null | undefined): string | undefined {
   const separator = subtitle?.indexOf("·");
-  return separator === undefined || separator === -1 ? undefined : nonEmptyString(subtitle?.slice(separator + 1));
+  return separator === undefined || separator === -1
+    ? undefined
+    : nonEmptyString(subtitle?.slice(separator + 1));
 }
 
 function extractPlaylistTitle(state: JsonValue): string | undefined {
@@ -661,13 +698,17 @@ function isTrackLockup(value: JsonObject): value is JsonObject & SerializedTrack
 
 function normalizeTrack(track: SerializedTrack, position: number): Track | undefined {
   const title = nonEmptyString(track.title);
-  const artist = nonEmptyString(track.artistName) ?? nonEmptyString(track.subtitleLinks?.[0]?.title);
+  const artist =
+    nonEmptyString(track.artistName) ?? nonEmptyString(track.subtitleLinks?.[0]?.title);
   const cover = getArtworkUrl(track?.artwork?.dictionary?.url);
   if (title === undefined || artist === undefined) {
     return undefined;
   }
 
-  const durationMs = typeof track.duration === "number" && Number.isFinite(track.duration) ? track.duration : undefined;
+  const durationMs =
+    typeof track.duration === "number" && Number.isFinite(track.duration)
+      ? track.duration
+      : undefined;
   const appleId = track.contentDescriptor?.identifiers?.storeAdamID;
 
   return {

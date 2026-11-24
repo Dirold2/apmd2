@@ -1,41 +1,26 @@
 {
   "name": "apmd2",
-  "version": "1.0.6",
-  "type": "module",
+  "version": "1.0.7",
   "description": "A Node.js wrapper for the Apple API (Unofficial) http://apple.com",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "keywords": [
+    "api",
+    "apple",
+    "apple.music",
+    "music",
+    "wrapper"
+  ],
+  "license": "MIT",
   "author": "Dirold2",
   "contributors": [
     "Dirold2 (https://github.com/dirold2)"
   ],
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/dirold2/apmd2.git"
   },
-  "keywords": [
-    "apple",
-    "music",
-    "api",
-    "wrapper",
-    "apple.music"
-  ],
-  "dependencies": {
-    "hcacher": "^0.3.1",
-    "hyperttp": "^0.7.5",
-    "node-html-parser": "^9.0.7"
-  },
-  "devDependencies": {
-    "@dirold2/dev-tools": "^1.1.3",
-    "@types/node": "^26.6.6",
-    "chalk": "^6.0.1",
-    "dotenv-cli": "^11.1.0",
-    "oxfmt": "^0.78.0",
-    "oxlint": "^1.93.0",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
-  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc && esbuild 'dist/**/*.js' --outdir=dist --allow-overwrite --minify --sourcemap && d-build",
     "dist": "d-dist",
@@ -54,5 +39,20 @@
     "smoke:test": "dotenv -e .env -- tsx example/test.ts",
     "smoke:summary": "tsx smoke-runner.ts",
     "test:new-releases": "node --import tsx --test tests/new-releases.ts"
+  },
+  "dependencies": {
+    "hcacher": "^0.3.1",
+    "hyperttp": "^0.7.6",
+    "node-html-parser": "^9.0.7"
+  },
+  "devDependencies": {
+    "@dirold2/dev-tools": "^1.1.3",
+    "@types/node": "^26.6.6",
+    "chalk": "^6.0.1",
+    "dotenv-cli": "^11.1.0",
+    "oxfmt": "^0.80.0",
+    "oxlint": "^1.95.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   }
 }
